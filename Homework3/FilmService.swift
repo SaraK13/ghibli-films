@@ -14,7 +14,7 @@ class FilmService: FilmServiceProtocol {
         guard let url = URL(string: "https://ghibliapi.vercel.app/films") else {
             throw URLError(.badURL)
         }
-        let (data, response) = try await URLSession.shared.data(from: url)
+        let (data, response) = try await URLSession.shared.data(from: url) // downloading
         
         // 2. HTTPレスポンスのステータスコードをチェック
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
@@ -22,7 +22,7 @@ class FilmService: FilmServiceProtocol {
         }
         
         // 3. 取得したデータをJSONデコードし、Filmオブジェクトの配列を返す
-        let films = try JSONDecoder().decode([Film].self, from: data)
+        let films = try JSONDecoder().decode([Film].self, from: data) // parsing
         return films
     }
 }
