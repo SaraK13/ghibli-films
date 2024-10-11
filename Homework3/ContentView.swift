@@ -49,6 +49,9 @@ struct ContentView: View {
                 }
                 
             }
+            .refreshable { // Refresh logic: Call getAllFilms to refresh the data
+                viewModel.getAllFilms()
+            }
             .onAppear {
                 viewModel.getAllFilms()
             }
