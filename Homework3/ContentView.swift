@@ -42,7 +42,7 @@ struct ContentView: View {
                         }
                         
                     } label: {
-                        Label("Sort", systemImage: "arrowtriangle.down.fill")
+                        Label("Sort \(viewModel.sortOption.rawValue)", systemImage: "arrowtriangle.down.fill")
                     }
                     .padding(.trailing) // Add padding to give some space from the edge
                 }
