@@ -8,9 +8,16 @@
 import Foundation
 import SwiftUI
 
+enum SortOption: String, CaseIterable {
+    case az = "A-Z"
+    case za = "Z-A"
+    case publishYear = "Publish Year"
+}
+
 class FilmViewModel: ObservableObject {
     @Published var films: [Film] = [] // holding the list of films
     @Published var errorMessage: String? = nil
+    @Published var sortOption: SortOption = .az
     
     private let filmService: FilmServiceProtocol
     
@@ -26,7 +33,7 @@ class FilmViewModel: ObservableObject {
                     if fetchedFilms.isEmpty {
                         self.errorMessage = "No films found"
                     } else {
-                        self.films = fetchedFilms.sorted { $0.title < $1.title }
+                        self.films = self.sortFilms(fetchedFilms, by: self.sortOption)
                     }
                 }
             } catch {
@@ -36,7 +43,24 @@ class FilmViewModel: ObservableObject {
             }
         }
     }
+    
+    func sortFilms(_ films: [Film], by option: SortOption) -> [Film] {
+        switch option {
+        case .az:
+            return films.sorted { $0.title < $1.title } // A-Z sorting
+        case .za:
+            return films.sorted { $0.title > $1.title } // Z-A sorting
+        case .publishYear:
+            return films.sorted { $0.release_date < $1.release_date } // Sort by year (add this field to Film)
+        }
+    }
+    
+    func refreshFilms() {
+        self.films = sortFilms(self.films, by: self.sortOption)
+    }
 }
+
+
 
 // The @Published propety holds list of films
 // When fetchFilms() is called in the FilmViewModel, it fetches the films from the FilmService,
