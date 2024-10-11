@@ -14,13 +14,13 @@ struct FilmView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // Show the film image
+                // film image
                 AsyncImage(url: URL(string: film.image)) { phase in
                     if let image = phase.image {
                         image
                             .resizable()
-                            .scaledToFit()
-                            .frame(height: 300)
+                            .scaledToFill()
+                            .frame(height: 200)
                             .cornerRadius(10)
                     } else if phase.error != nil {
                         Color.red // Error placeholder
@@ -46,7 +46,8 @@ struct FilmView: View {
                     .padding(.bottom, 16)
                 
                 Text("id: \(film.id)")
-                Text("Image URL: \(film.image)")
+                Text("Image URL:")
+                Link("\(film.image)", destination: URL(string: "\(film.image)")!)
                 
                 Spacer()
             }
