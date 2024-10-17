@@ -1,10 +1,3 @@
-//
-//  FilmViewModel.swift
-//  Homework3
-//
-//  Created by sara konno on 11.10.24.
-//
-
 import Foundation
 import SwiftUI
 
@@ -16,6 +9,8 @@ enum SortOption: String, CaseIterable {
 
 class FilmViewModel: ObservableObject {
     @Published var films: [Film] = [] // holding the list of films
+    //@Publishedは、ObservableObjectプロトコルを採用したクラス内で使われるプロパティラッパー。Publishedを使うことで、そのプロパティが変更された時に自動的に通知が行われ、そのプロパティを監視しているビューが再描画される仕組みを提供する。
+    
     @Published var errorMessage: String? = nil
     @Published var sortOption: SortOption = .az
     

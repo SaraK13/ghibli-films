@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var viewModel = FilmViewModel(filmService: FilmService())
+    //@StateObjectは、SwiftUIにおける状態管理のための属性で、参照型オブジェクトのライフサイクルをSwiftUIが管理するために使用されます。特に、ObservableObjectを使っている場合に、ビューがそのオブジェクトを監視し、データが変化したときにビューを自動的に再描画する仕組みを提供. 新しいオブジェクトを作成し、そのライフサイクルを管理.
 
     var body: some View {
         NavigationView {
@@ -49,7 +50,9 @@ struct ContentView: View {
                 .padding(.top)
             
                 
-                List(viewModel.films, id: \.id) { film in
+                List(viewModel.films.indices, id: \.self) { index in
+                    let film = viewModel.films[index] // Access film by index
+                    
                     NavigationLink(destination: FilmView(film: film)) {
                         HStack(alignment: .top) {
                             // Use AsyncImage to fetch the image from URL
@@ -83,6 +86,7 @@ struct ContentView: View {
                             .padding(.leading, 8)
                         }
                         .padding(.vertical, 8)
+                        .background(index == 0 ? Color.blue.opacity(0.3) : Color.clear)
                     }
                 }
                 .refreshable { // Refresh logic: Call getAllFilms to refresh the data

@@ -1,10 +1,3 @@
-//
-//  FilmView.swift
-//  Homework3
-//
-//  Created by sara konno on 11.10.24.
-//
-
 import SwiftUI
 import Foundation
 
@@ -15,18 +8,28 @@ struct FilmView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 // film image
-                AsyncImage(url: URL(string: film.image)) { phase in
-                    if let image = phase.image {
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(height: 200)
-                            .cornerRadius(10)
-                    } else if phase.error != nil {
-                        Color.red // Error placeholder
-                    } else {
-                        Color.gray // Loading placeholder
+                ZStack(alignment: .bottomTrailing) {
+                    AsyncImage(url: URL(string: film.image)) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(height: 200)
+                                .cornerRadius(10)
+                        } else if phase.error != nil {
+                            Color.red // Error placeholder
+                        } else {
+                            Color.gray // Loading placeholder
+                        }
                     }
+                    
+                    Text("\(film.title)")
+                        .padding()
+                        .foregroundColor(.primary)
+                        .background(Color.primary
+                            .colorInvert()
+                            .opacity(0.75))
+                        .offset(x: -5, y: -5)
                 }
                 
                 Text("Original Title: \(film.original_title)")
@@ -46,13 +49,19 @@ struct FilmView: View {
                     .padding(.bottom, 16)
                 
                 Text("id: \(film.id)")
-                Text("Image URL:")
-                Link("\(film.image)", destination: URL(string: "\(film.image)")!)
                 
                 Spacer()
             }
             .padding()
+            
+            Button("Open Image URL") {
+                UIApplication.shared.open(URL(string: "\(film.image)")!)
+            }
+            .padding()
+            .background(Color(red: 0, green: 0, blue: 0.5))
+            .foregroundStyle(.white)
+            .clipShape(Capsule())
         }
-        .navigationTitle(film.title)
+
     }
 }
