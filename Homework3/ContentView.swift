@@ -10,10 +10,20 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel = FilmViewModel(filmService: FilmService())
     //@StateObjectは、SwiftUIにおける状態管理のための属性で、参照型オブジェクトのライフサイクルをSwiftUIが管理するために使用されます。特に、ObservableObjectを使っている場合に、ビューがそのオブジェクトを監視し、データが変化したときにビューを自動的に再描画する仕組みを提供. 新しいオブジェクトを作成し、そのライフサイクルを管理.
+    
+    @State private var showImages = UserSettings.shared.showImages
+    @State private var apiUrl = UserSettings.shared.apiUrl
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationView {
             VStack {
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)  // Show the error message
+                        .foregroundColor(.red)
+                        .padding()
+                }
+                
                 HStack {
                     Spacer() // Push the menu to the right side
                     
@@ -55,26 +65,29 @@ struct ContentView: View {
                     
                     NavigationLink(destination: FilmView(film: film)) {
                         HStack(alignment: .top) {
-                            // Use AsyncImage to fetch the image from URL
-                            AsyncImage(url: URL(string: film.image)) { phase in
-                                if let image = phase.image {
-                                    image
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 100, height: 150)
-                                        .cornerRadius(8)
-                                } else if phase.error != nil {
-                                    // In case of an error loading the image
-                                    Color.red
-                                        .frame(width: 100, height: 150)
-                                        .cornerRadius(8)
-                                } else {
-                                    // Placeholder while loading the image
-                                    Color.gray
-                                        .frame(width: 100, height: 150)
-                                        .cornerRadius(8)
+                            if showImages {
+                                // Use AsyncImage to fetch the image from URL
+                                AsyncImage(url: URL(string: film.image)) { phase in
+                                    if let image = phase.image {
+                                        image
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 100, height: 150)
+                                            .cornerRadius(8)
+                                    } else if phase.error != nil {
+                                            // In case of an error loading the image
+                                        Color.red
+                                            .frame(width: 100, height: 150)
+                                            .cornerRadius(8)
+                                    } else {
+                                            // Placeholder while loading the image
+                                        Color.gray
+                                            .frame(width: 100, height: 150)
+                                            .cornerRadius(8)
+                                    }
                                 }
                             }
+                            
                             
                             VStack(alignment: .leading) {
                                 Text(film.title)
@@ -94,11 +107,29 @@ struct ContentView: View {
                 }
                 .onAppear {
                     viewModel.getAllFilms()
+                    observeUserDefaultsChanges() // Observe changes on appear
                 }
                 .listStyle(.inset) // insetGrouped
             }
             .navigationTitle("Studio Ghibli Films")
         }
+    }
+    
+    // Function to load films from the API
+    func loadFilms() {
+        viewModel.getAllFilms()
+    }
+    
+    // React to changes in UserDefaults (API URL and showImages)
+    func observeUserDefaultsChanges() {
+            // Observe changes to the API URL
+        if apiUrl != UserSettings.shared.apiUrl {
+            apiUrl = UserSettings.shared.apiUrl
+            viewModel.getAllFilms() // Reload films when the URL changes
+        }
+        
+            // Observe changes to the showImages toggle
+        showImages = UserSettings.shared.showImages
     }
 }
 

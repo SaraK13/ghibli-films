@@ -3,8 +3,9 @@ import Foundation
 class FilmService: FilmServiceProtocol {
     
     func fetchFilms() async throws -> [Film] {
+        
         // 1. URLを作成し、データを取得
-        guard let url = URL(string: "https://ghibliapi.vercel.app/films") else {
+        guard let url = URL(string: UserSettings.shared.apiUrl) else {
             throw URLError(.badURL)
         }
         let (data, response) = try await URLSession.shared.data(from: url) // downloading
