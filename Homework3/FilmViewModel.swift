@@ -20,21 +20,19 @@ class FilmViewModel: ObservableObject {
         self.filmService = filmService
     }
     
-    func getAllFilms() {
-        Task {
-            do {
-                let fetchedFilms = try await filmService.fetchFilms()
-                DispatchQueue.main.async {
-                    if fetchedFilms.isEmpty {
-                        self.errorMessage = "No films found"
-                    } else {
-                        self.films = self.sortFilms(fetchedFilms, by: self.sortOption)
-                    }
+    func getAllFilms() async {
+        do {
+            let fetchedFilms = try await filmService.fetchFilms()
+            DispatchQueue.main.async {
+                if fetchedFilms.isEmpty {
+                    self.errorMessage = "No films found"
+                } else {
+                    self.films = self.sortFilms(fetchedFilms, by: self.sortOption)
                 }
-            } catch {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Error fetching films: \(error.localizedDescription)"
-                }
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = "Error fetching films: \(error.localizedDescription)"
             }
         }
     }

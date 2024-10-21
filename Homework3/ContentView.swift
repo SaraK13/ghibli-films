@@ -103,10 +103,14 @@ struct ContentView: View {
                     }
                 }
                 .refreshable { // Refresh logic: Call getAllFilms to refresh the data
-                    viewModel.getAllFilms()
+                    Task {
+                        await viewModel.getAllFilms()
+                    }
                 }
                 .onAppear {
-                    viewModel.getAllFilms()
+                    Task {
+                        await viewModel.getAllFilms()
+                    }
                     observeUserDefaultsChanges() // Observe changes on appear
                 }
                 .listStyle(.inset) // insetGrouped
@@ -117,7 +121,9 @@ struct ContentView: View {
     
     // Function to load films from the API
     func loadFilms() {
-        viewModel.getAllFilms()
+        Task {
+            await viewModel.getAllFilms()
+        }
     }
     
     // React to changes in UserDefaults (API URL and showImages)
@@ -125,7 +131,9 @@ struct ContentView: View {
             // Observe changes to the API URL
         if apiUrl != UserSettings.shared.apiUrl {
             apiUrl = UserSettings.shared.apiUrl
-            viewModel.getAllFilms() // Reload films when the URL changes
+            Task {
+                await viewModel.getAllFilms()
+            } // Reload films when the URL changes
         }
         
             // Observe changes to the showImages toggle

@@ -14,7 +14,7 @@ class UserSettings {
         static let showImages = "showImages"
     }
     
-        // Register default values
+    // Register default values
     func registerDefaults() {
         userDefaults.register(defaults: [
             Keys.apiUrl: "https://ghibliapi.vercel.app/films", // Default API URL
@@ -22,7 +22,7 @@ class UserSettings {
         ])
     }
     
-        // API URL
+    // API URL
     var apiUrl: String {
         get {
             return userDefaults.string(forKey: Keys.apiUrl) ?? "https://ghibliapi.vercel.app/films"
@@ -32,7 +32,7 @@ class UserSettings {
         }
     }
     
-        // Show/Hide Images
+    // Show/Hide Images
     var showImages: Bool {
         get {
             return userDefaults.bool(forKey: Keys.showImages)

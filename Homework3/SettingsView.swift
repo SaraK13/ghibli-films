@@ -9,20 +9,19 @@ struct SettingsView: View {
             Section(header: Text("API Settings")) {
                 TextField("API URL", text: $apiUrl)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .onChange(of: apiUrl) { newValue in
-                            // Save the new API URL in UserDefaults
-                        UserSettings.shared.apiUrl = newValue
+                    .onChange(of: apiUrl) {
+                        // Save the new API URL in UserDefaults
+                        UserSettings.shared.apiUrl = apiUrl
                     }
             }
             
             Section(header: Text("Display Settings")) {
                 Toggle("Show Images", isOn: $showImages)
-                    .onChange(of: showImages) { newValue in
-                            // Save the show images setting in UserDefaults
-                        UserSettings.shared.showImages = newValue
+                    .onChange(of: showImages) {
+                        // Save the show images setting in UserDefaults
+                        UserSettings.shared.showImages = showImages
                     }
             }
         }
-        .navigationTitle("Settings")
     }
 }
