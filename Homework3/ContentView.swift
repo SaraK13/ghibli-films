@@ -11,8 +11,9 @@ struct ContentView: View {
     @StateObject private var viewModel = FilmViewModel(filmService: FilmService())
     //@StateObjectは、SwiftUIにおける状態管理のための属性で、参照型オブジェクトのライフサイクルをSwiftUIが管理するために使用されます。特に、ObservableObjectを使っている場合に、ビューがそのオブジェクトを監視し、データが変化したときにビューを自動的に再描画する仕組みを提供. 新しいオブジェクトを作成し、そのライフサイクルを管理.
     
-    @State private var showImages = UserSettings.shared.showImages
-    @State private var apiUrl = UserSettings.shared.apiUrl
+    @AppStorage(UserSettings.Keys.apiUrl) private var apiUrl = UserSettings.shared.apiUrl
+    @AppStorage(UserSettings.Keys.showImages) private var showImages = UserSettings.shared.showImages
+
     @State private var errorMessage: String?
 
     var body: some View {

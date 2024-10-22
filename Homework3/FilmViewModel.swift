@@ -44,7 +44,7 @@ class FilmViewModel: ObservableObject {
         case .za:
             return films.sorted { $0.title > $1.title } // Z-A sorting
         case .publishYear:
-            return films.sorted { $0.release_date < $1.release_date } // Sort by year (add this field to Film)
+            return films.sorted { $0.release_date < $1.release_date } // Sort by year
         }
     }
     

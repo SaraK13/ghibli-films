@@ -1,7 +1,7 @@
 import Foundation
 
 class UserSettings {
-    static let shared = UserSettings()
+    static let shared = UserSettings() // singleton, which means only one instance is created.
     
     private init() {
         registerDefaults()
