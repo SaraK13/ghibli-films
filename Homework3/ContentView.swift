@@ -114,6 +114,12 @@ struct ContentView: View {
                     }
                     observeUserDefaultsChanges() // Observe changes on appear
                 }
+                // React to apiUrl changes
+                .onChange(of: apiUrl) {
+                    Task {
+                        await viewModel.getAllFilms()
+                    }
+                }
                 .listStyle(.inset) // insetGrouped
             }
             .navigationTitle("Studio Ghibli Films")

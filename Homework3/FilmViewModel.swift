@@ -28,6 +28,7 @@ class FilmViewModel: ObservableObject {
                     self.errorMessage = "No films found"
                 } else {
                     self.films = self.sortFilms(fetchedFilms, by: self.sortOption)
+                    self.errorMessage = nil // Clear error if data is successfully loaded. without this line, error msg persisted even after correct URL was given
                 }
             }
         } catch {
