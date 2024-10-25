@@ -15,6 +15,9 @@ struct ContentView: View {
     @AppStorage(UserSettings.Keys.showImages) private var showImages = UserSettings.shared.showImages
 
     @State private var errorMessage: String?
+    
+    // Get a reference to the managed object context from the environment.
+    @Environment(\.managedObjectContext) private var viewContext
 
     var body: some View {
         NavigationView {
