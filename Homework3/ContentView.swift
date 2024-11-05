@@ -28,126 +28,124 @@ struct ContentView: View {
                         .padding()
                 }
                 
-                HStack {
-                    Spacer() // Push the menu to the right side
-                    
-                    Menu {
-                        // A-Z Sorting
-                        Button(action: {
-                            viewModel.sortOption = .az
-                            viewModel.refreshFilms()
-                        }) {
-                            Label("A-Z", systemImage: "arrow.up")
-                        }
-                        
-                        // Z-A Sorting
-                        Button(action: {
-                            viewModel.sortOption = .za
-                            viewModel.refreshFilms()
-                        }) {
-                            Label("Z-A", systemImage: "arrow.down")
-                        }
-                        
-                        // Publish Year Sorting
-                        Button(action: {
-                            viewModel.sortOption = .publishYear
-                            viewModel.refreshFilms()
-                        }) {
-                            Label("Publish Year", systemImage: "calendar")
-                        }
-                        
-                    } label: {
-                        Label("Sort \(viewModel.sortOption.rawValue)", systemImage: "arrowtriangle.down.fill")
-                    }
-                    .padding(.trailing) // Add padding to give some space from the edge
-                }
-                .padding(.top)
-            
+                sortingMenu
                 
-                List(viewModel.films.indices, id: \.self) { index in
-                    let film = viewModel.films[index] // Access film by index
-                    
-                    NavigationLink(destination: FilmView(film: film)) {
-                        HStack(alignment: .top) {
-                            if showImages {
-                                // Use AsyncImage to fetch the image from URL
-                                AsyncImage(url: URL(string: film.image)) { phase in
-                                    if let image = phase.image {
-                                        image
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 100, height: 150)
-                                            .cornerRadius(8)
-                                    } else if phase.error != nil {
-                                            // In case of an error loading the image
-                                        Color.red
-                                            .frame(width: 100, height: 150)
-                                            .cornerRadius(8)
-                                    } else {
-                                            // Placeholder while loading the image
-                                        Color.gray
-                                            .frame(width: 100, height: 150)
-                                            .cornerRadius(8)
-                                    }
-                                }
-                            }
-                            
-                            
-                            VStack(alignment: .leading) {
-                                Text(film.title)
-                                    .font(.headline)
-                                Text(film.description)
-                                    .font(.subheadline)
-                                    .lineLimit(3) // Limiting lines to avoid too much text in the list
-                            }
-                            .padding(.leading, 8)
+                filmListView
+                    .refreshable { // Refresh logic: Call reloadFilmsFromAPI to refresh the data<
+                        Task {
+                            await viewModel.reloadFilmsFromAPI()
                         }
-                        .padding(.vertical, 8)
-                        .background(index == 0 ? Color.blue.opacity(0.3) : Color.clear)
                     }
-                }
-                .refreshable { // Refresh logic: Call getAllFilms to refresh the data
-                    Task {
-                        await viewModel.getAllFilms()
+                    .onAppear {
+                        if viewModel.films.isEmpty {  // Only load if the films array is empty
+                            viewModel.loadFilmsFromDatabase()
+                            Task {
+                                await viewModel.reloadFilmsFromAPI()
+                            }
+                        }
                     }
-                }
-                .onAppear {
-                    Task {
-                        await viewModel.getAllFilms()
+                    // React to apiUrl changes
+                    .onChange(of: apiUrl) {
+                        Task {
+                            viewModel.deleteFilms()  // Clear the database on URL change
+                            await viewModel.reloadFilmsFromAPI()
+                        }
                     }
-                    observeUserDefaultsChanges() // Observe changes on appear
-                }
-                // React to apiUrl changes
-                .onChange(of: apiUrl) {
-                    Task {
-                        await viewModel.getAllFilms()
-                    }
-                }
-                .listStyle(.inset) // insetGrouped
+                    .listStyle(.inset)
             }
             .navigationTitle("Studio Ghibli Films")
         }
     }
     
-    // Function to load films from the API
-    func loadFilms() {
-        Task {
-            await viewModel.getAllFilms()
+    private var sortingMenu: some View {
+        HStack {
+            Spacer()
+            Menu {
+                Button(action: {
+                    viewModel.sortOption = .az
+                    viewModel.updateSorting()
+                }) {
+                    Label("A-Z", systemImage: "arrow.up")
+                }
+                
+                Button(action: {
+                    viewModel.sortOption = .za
+                    viewModel.updateSorting()
+                }) {
+                    Label("Z-A", systemImage: "arrow.down")
+                }
+                
+                Button(action: {
+                    viewModel.sortOption = .publishYear
+                    viewModel.updateSorting()
+                }) {
+                    Label("Publish Year", systemImage: "calendar")
+                }
+            } label: {
+                Label("Sort \(viewModel.sortOption.rawValue)", systemImage: "arrowtriangle.down.fill")
+            }
+            .padding(.trailing)
         }
+        .padding(.top)
     }
     
-    // React to changes in UserDefaults (API URL and showImages)
-    func observeUserDefaultsChanges() {
-            // Observe changes to the API URL
-        if apiUrl != UserSettings.shared.apiUrl {
-            apiUrl = UserSettings.shared.apiUrl
-            Task {
-                await viewModel.getAllFilms()
-            } // Reload films when the URL changes
+    private var filmListView: some View {
+        List(viewModel.films.indices, id: \.self) { index in
+            let film = viewModel.films[index]
+            NavigationLink(destination: FilmView(film: film)) {
+                FilmRow(film: film, showImages: showImages)
+            }
         }
-        
-            // Observe changes to the showImages toggle
-        showImages = UserSettings.shared.showImages
+    }
+}
+
+struct FilmRow: View {
+    let film: FilmModel
+    let showImages: Bool
+    
+    var body: some View {
+        HStack(alignment: .top) {
+            if showImages, let imageURL = URL(string: film.image ?? "") {
+                AsyncImage(url: imageURL) { phase in
+                    FilmImageView(phase: phase)
+                }
+            }
+            
+            VStack(alignment: .leading) {
+                Text(film.title ?? "Unknown Title")
+                    .font(.headline)
+                Text(film.film_description ?? "No Description")
+                    .font(.subheadline)
+                    .lineLimit(3)
+            }
+            .padding(.leading, 8)
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+    // Simplified FilmImageView to encapsulate AsyncImage phases
+struct FilmImageView: View {
+    let phase: AsyncImagePhase
+    
+    var body: some View {
+        switch phase {
+            case .empty:
+                Color.gray
+                    .frame(width: 100, height: 150)
+                    .cornerRadius(8)
+            case .success(let image):
+                image.resizable()
+                    .scaledToFit()
+                    .frame(width: 100, height: 150)
+                    .cornerRadius(8)
+            case .failure:
+                Color.red
+                    .frame(width: 100, height: 150)
+                    .cornerRadius(8)
+            @unknown default:
+                EmptyView()
+        }
     }
 }
 

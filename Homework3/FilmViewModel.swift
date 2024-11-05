@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import CoreData
 
 enum SortOption: String, CaseIterable {
     case az = "A-Z"
@@ -8,50 +9,105 @@ enum SortOption: String, CaseIterable {
 }
 
 class FilmViewModel: ObservableObject {
-    @Published var films: [Film] = [] // holding the list of films
+    @Published var films: [FilmModel] = [] // holding the list of films
     //@Publishedは、ObservableObjectプロトコルを採用したクラス内で使われるプロパティラッパー。Publishedを使うことで、そのプロパティが変更された時に自動的に通知が行われ、そのプロパティを監視しているビューが再描画される仕組みを提供する。
     
     @Published var errorMessage: String? = nil
     @Published var sortOption: SortOption = .az
     
+    private let coreDataStack = CoreDataStack.shared
     private let filmService: FilmServiceProtocol
+    private var isDataLoaded = false
     
     init(filmService: FilmServiceProtocol) {
         self.filmService = filmService
     }
     
-    func getAllFilms() async {
+    func loadFilmsFromDatabase() {
+        // Avoid reloading if films are already loaded
+        guard !isDataLoaded else { return }
+        
+        let fetchedFilms = coreDataStack.fetchFilms()
+        DispatchQueue.main.async {
+            self.films = self.sortFilms(fetchedFilms)
+            self.isDataLoaded = true  // Mark as loaded after initial fetch
+            print("Fetched \(fetchedFilms.count) films from Core Data")
+        }
+    }
+    
+    func reloadFilmsFromAPI() async {
         do {
             let fetchedFilms = try await filmService.fetchFilms()
-            DispatchQueue.main.async {
-                if fetchedFilms.isEmpty {
-                    self.errorMessage = "No films found"
-                } else {
-                    self.films = self.sortFilms(fetchedFilms, by: self.sortOption)
-                    self.errorMessage = nil // Clear error if data is successfully loaded. without this line, error msg persisted even after correct URL was given
+            
+            // Fetch existing films from Core Data
+            let existingFilms = coreDataStack.fetchFilms()
+            let existingFilmIDs = Set(existingFilms.map { $0.id })
+            
+            // Filter out films that are not already in Core Data
+            let newFilms = fetchedFilms.filter { !existingFilmIDs.contains($0.id) }
+            
+            if newFilms.isEmpty {
+                // If no new films are found, print a log message
+                DispatchQueue.main.async {
+                    print("No new films found in API response")
+                }
+            } else {
+                // If there are new films, update the database
+                coreDataStack.deleteAllFilms() // Clear the database
+                
+                for film in fetchedFilms {
+                    let filmEntity = FilmModel(context: coreDataStack.context)
+                    filmEntity.id = film.id
+                    filmEntity.title = film.title
+                    filmEntity.film_description = film.description
+                    filmEntity.image = film.image
+                    filmEntity.original_title = film.original_title
+                    filmEntity.director = film.director
+                    filmEntity.release_date = film.release_date
+                }
+                
+                coreDataStack.saveContext()
+                
+                DispatchQueue.main.async {
+                    self.loadFilmsFromDatabase()  // Refresh films only after database update
+                    self.errorMessage = nil  // Clear error if data was successfully updated
+                    print("Database updated with new films")
                 }
             }
+            
         } catch {
             DispatchQueue.main.async {
                 self.errorMessage = "Error fetching films: \(error.localizedDescription)"
+                print("Error fetching films: \(error.localizedDescription)")
             }
         }
     }
+
     
-    func sortFilms(_ films: [Film], by option: SortOption) -> [Film] {
-        switch option {
-        case .az:
-            return films.sorted { $0.title < $1.title } // A-Z sorting
-        case .za:
-            return films.sorted { $0.title > $1.title } // Z-A sorting
-        case .publishYear:
-            return films.sorted { $0.release_date < $1.release_date } // Sort by year
+    func sortFilms(_ films: [FilmModel]) -> [FilmModel] {
+        switch sortOption {
+            case .az:
+                return films.sorted { $0.title ?? "" < $1.title ?? "" }
+            case .za:
+                return films.sorted { $0.title ?? "" > $1.title ?? "" }
+            case .publishYear:
+                return films.sorted { $0.release_date ?? "" < $1.release_date ?? "" }
         }
     }
     
-    func refreshFilms() {
-        self.films = sortFilms(self.films, by: self.sortOption)
+    func updateSorting() {
+        DispatchQueue.main.async {
+            self.films = self.sortFilms(self.films)
+        }
     }
+    
+    // for API change. whenever API is changed, database will be reset
+    func deleteFilms() {
+        coreDataStack.deleteAllFilms()
+        self.isDataLoaded = false
+        print("All films deleted from Core Data due to URL change")
+    }
+
 }
 
 

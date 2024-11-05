@@ -1,26 +1,53 @@
 import Foundation
 import CoreData
 
-// Define an observable class to encapsulate all Core Data-related functionality.
 class CoreDataStack: ObservableObject {
     static let shared = CoreDataStack()
     
-    // Create a persistent container as a lazy variable to defer instantiation until its first use.
     lazy var persistentContainer: NSPersistentContainer = {
-        
-        // Pass the data model filename to the container’s initializer.
         let container = NSPersistentContainer(name: "Model")
-        
-            // Load any persistent stores, which creates a store if none exists.
         container.loadPersistentStores { _, error in
-            if let error {
-                    // Handle the error appropriately. However, it's useful to use
-                    // `fatalError(_:file:line:)` during development.
+            if let error = error {
                 fatalError("Failed to load persistent stores: \(error.localizedDescription)")
             }
         }
         return container
     }()
     
+    var context: NSManagedObjectContext {
+        return persistentContainer.viewContext
+    }
+    
     private init() { }
+    
+    func saveContext() {
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+                print("Failed to save context: \(error)")
+            }
+        }
+    }
+    
+    func fetchFilms() -> [FilmModel] {
+        let request: NSFetchRequest<FilmModel> = FilmModel.fetchRequest()
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("Failed to fetch films: \(error)")
+            return []
+        }
+    }
+    
+    func deleteAllFilms() {
+        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = FilmModel.fetchRequest()
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        do {
+            try context.execute(deleteRequest)
+            saveContext()
+        } catch {
+            print("Failed to delete films: \(error)")
+        }
+    }
 }
